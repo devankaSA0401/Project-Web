@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOKO NADYN – POS System</title>
+  <meta name="description"
+    content="Sistem Point of Sale modern untuk Toko Listrik NADYN – kelola penjualan, pembelian, stok, dan keuangan dengan mudah." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-bg"></div>
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon">⚡</div>
+        <h1>TOKO NADYN</h1>
+        <p>Point of Sale System</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" placeholder="Masukkan username" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="Masukkan password" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-full">Masuk</button>
+        <p class="login-hint">Demo: admin / admin123 · kasir / kasir123</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Shell -->
+  <button id="sidebar-toggle-mobile" class="sidebar-toggle-mobile" title="Menu">&#9776;</button>
+  <div id="app" class="app hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="logo-icon-sm">⚡</span>
+          <div>
+            <div class="sidebar-title">TOKO NADYN</div>
+            <div class="sidebar-subtitle">POS System</div>
+          </div>
+        </div>
+        <button id="sidebar-toggle" class="sidebar-toggle" title="Toggle Sidebar">&#9776;</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">MENU UTAMA</div>
+        <a href="#" class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-page="pos">
+          <span class="nav-icon">🛒</span><span class="nav-label">Kasir / POS</span>
+        </a>
+
+        <div class="nav-section-label">PEMBELIAN &amp; STOK</div>
+        <a href="#" class="nav-item" data-page="pembelian">
+          <span class="nav-icon">📦</span><span class="nav-label">Pembelian</span>
+        </a>
+        <a href="#" class="nav-item" data-page="stok">
+          <span class="nav-icon">🏭</span><span class="nav-label">Manajemen Stok</span>
+        </a>
+
+        <div class="nav-section-label">LAPORAN</div>
+        <a href="#" class="nav-item" data-page="cashflow">
+          <span class="nav-icon">💰</span><span class="nav-label">Cash Flow</span>
+        </a>
+        <a href="#" class="nav-item" data-page="akuntansi">
+          <span class="nav-icon">📒</span><span class="nav-label">Akuntansi</span>
+        </a>
+        <a href="#" class="nav-item" data-page="laporan">
+          <span class="nav-icon">📈</span><span class="nav-label">Laporan</span>
+        </a>
+
+        <div class="nav-section-label">MASTER DATA</div>
+        <a href="#" class="nav-item" data-page="barang">
+          <span class="nav-icon">🔌</span><span class="nav-label">Data Barang</span>
+        </a>
+        <a href="#" class="nav-item" data-page="supplier">
+          <span class="nav-icon">🏪</span><span class="nav-label">Supplier</span>
+        </a>
+        <a href="#" class="nav-item" data-page="customer">
+          <span class="nav-icon">👥</span><span class="nav-label">Customer</span>
+        </a>
+        <a href="#" class="nav-item" data-page="user-mgmt" id="nav-user-mgmt">
+          <span class="nav-icon">👤</span><span class="nav-label">User</span>
+        </a>
+
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="user-avatar">A</div>
+          <div>
+            <div class="user-name" id="user-name">Admin</div>
+            <div class="user-role" id="user-role">Administrator</div>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn-icon" title="Logout">🚪</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+      <div id="page-dashboard" class="page active"></div>
+      <div id="page-pos" class="page"></div>
+      <div id="page-pembelian" class="page"></div>
+      <div id="page-stok" class="page"></div>
+      <div id="page-cashflow" class="page"></div>
+      <div id="page-akuntansi" class="page"></div>
+      <div id="page-laporan" class="page"></div>
+      <div id="page-barang" class="page"></div>
+      <div id="page-supplier" class="page"></div>
+      <div id="page-customer" class="page"></div>
+      <div id="page-user-mgmt" class="page"></div>
+
+    </main>
+  </div>
+
+  <!-- Global Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div id="modal-box" class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title">Modal</h3>
+        <button id="modal-close" class="btn-icon">✕</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+      <div id="modal-footer" class="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Print Area -->
+  <div id="print-area" class="print-area hidden"></div>
+
+  <!-- JS Modules -->
+  <script src="js/db.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/pos.js"></script>
+  <script src="js/pages/pembelian.js"></script>
+  <script src="js/pages/stok.js"></script>
+  <script src="js/pages/cashflow.js"></script>
+  <script src="js/pages/akuntansi.js"></script>
+  <script src="js/pages/laporan.js"></script>
+  <script src="js/pages/barang.js"></script>
+  <script src="js/pages/supplier.js"></script>
+  <script src="js/pages/customer.js"></script>
+  <script src="js/pages/user-mgmt.js"></script>
+
+  <script src="js/app.js"></script>
+</body>
+
+</html>
