@@ -301,63 +301,51 @@ const POSPage = {
 
             Utils.confirm('Transaksi Berhasil! Cetak Nota?', async () => {
               const content = `
-                  <div style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#000; width:300px; margin:0 auto; padding:10px;">
-                    <div style="text-align:center; margin-bottom:10px;">
-                      <h2 style="margin:0; font-size:16px;">TOKO LISTRIK NADYN</h2>
-                      <p style="margin:2px 0; font-size:10px;">Jl. Raya Listrik No. 123, Indonesia</p>
-                      <p style="margin:2px 0; font-size:10px;">Telp: 021-12345678</p>
+                <div style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#000;">
+                  <div style="border-top:1px dashed #000; padding:5px 0; font-size:10px;">
+                    <div style="display:flex; justify-content:space-between;">
+                      <span>No: ${payload.nota.noNota}</span>
+                      <span>${Utils.formatDate(new Date())}</span>
                     </div>
-                    
-                    <div style="border-top:1px dashed #000; padding:5px 0; font-size:10px;">
-                      <div style="display:flex; justify-content:space-between;">
-                        <span>${payload.nota.noNota}</span>
-                        <span>${Utils.formatDateTime(new Date())}</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between;">
-                        <span>Kasir: ${Auth.currentUser.nama || Auth.currentUser.username}</span>
-                        <span>Cust: ${this.selectedCustomer?.nama || 'Umum'}</span>
-                      </div>
+                    <div style="display:flex; justify-content:space-between;">
+                      <span>Kasir: ${Auth.currentUser.nama || Auth.currentUser.username}</span>
+                      <span>Cust: ${this.selectedCustomer?.nama || 'Umum'}</span>
                     </div>
-                    
-                    <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:8px 0;">
-                      ${payload.items.map(it => `
-                        <div style="margin-bottom:5px;">
-                          <div style="display:flex; justify-content:space-between;">
-                            <span style="flex:1;">${it.namaBarang}</span>
-                          </div>
-                          <div style="display:flex; justify-content:space-between; padding-left:10px;">
-                            <span>${Utils.formatNum(it.qty)} x ${Utils.formatNum(it.hargaJual)}</span>
-                            <span>${Utils.formatNum(it.subtotal)}</span>
-                          </div>
+                  </div>
+
+                  <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:8px 0;">
+                    ${payload.items.map(it => `
+                      <div style="margin-bottom:5px;">
+                        <div style="display:flex; justify-content:space-between;">
+                          <span style="flex:1;">${it.namaBarang}</span>
                         </div>
-                      `).join('')}
-                    </div>
-                    
-                    <div style="margin-top:8px; font-weight:bold;">
-                      <div style="display:flex; justify-content:space-between;">
-                        <span>TOTAL</span>
-                        <span>${Utils.formatNum(total)}</span>
+                        <div style="display:flex; justify-content:space-between; padding-left:10px;">
+                          <span>${Utils.formatNum(it.qty)} x ${Utils.formatNum(it.hargaJual)}</span>
+                          <span>${Utils.formatNum(it.subtotal)}</span>
+                        </div>
                       </div>
+                    `).join('')}
+                  </div>
+
+                  <div style="margin-top:8px; font-weight:bold;">
+                    <div style="display:flex; justify-content:space-between;">
+                      <span>TOTAL</span>
+                      <span>${Utils.formatNum(total)}</span>
                     </div>
-                    
-                    <div style="margin-top:5px; font-size:11px;">
-                      <div style="display:flex; justify-content:space-between;">
-                        <span>BAYAR (${metode})</span>
-                        <span>${Utils.formatNum(bayar)}</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between;">
-                        <span>KEMBALI</span>
-                        <span>${Utils.formatNum(bayar - total)}</span>
-                      </div>
+                  </div>
+
+                  <div style="margin-top:5px; font-size:11px;">
+                    <div style="display:flex; justify-content:space-between;">
+                      <span>BAYAR (${metode})</span>
+                      <span>${Utils.formatNum(bayar)}</span>
                     </div>
-                    
-                    <div style="text-align:center; margin-top:20px; border-top:1px dashed #000; padding-top:10px;">
-                      <p style="margin:0; font-size:11px; font-weight:bold;">TERIMA KASIH</p>
-                      <p style="margin:2px 0; font-size:10px;">Selamat Belanja Kembali</p>
-                      <p style="margin:10px 0 0; font-size:9px;">Layanan Konsumen: 0812-XXXX-XXXX</p>
+                    <div style="display:flex; justify-content:space-between;">
+                      <span>KEMBALI</span>
+                      <span>${Utils.formatNum(bayar - total)}</span>
                     </div>
-                  </div>`;
-              Utils.print('Nota Penjualan', content);
+                  </div>
+                </div>`;
+              Utils.print('Nota Penjualan', content, 'receipt');
             });
           }
         }
