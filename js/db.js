@@ -4,7 +4,7 @@
  */
 
 const DB = {
-  apiBase: 'http://localhost:3000/api',
+  apiBase: 'http://tokonadin.com/api', // Ubah ke domain tanpa port (port 80)
 
   async getAll(col) {
     try {

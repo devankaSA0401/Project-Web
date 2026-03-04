@@ -65,7 +65,7 @@ async function startServer() {
     try {
         await connectDB();
         app.listen(port, () => {
-            console.log(`🚀 Toko NADYN Backend running at http://localhost:${port}`);
+            console.log(`🚀 Toko NADYN Backend running at http://tokonadin.com`);
         });
     } catch (err) {
         console.error('❌ FATAL: Server failed to start!', err);
