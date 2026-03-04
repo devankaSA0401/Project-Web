@@ -15,7 +15,7 @@ const dbConfig = {
 async function seed() {
     try {
         const pool = await sql.connect(dbConfig);
-        console.log('🚀 Starting Seeder...');
+        console.log('🚀 Starting Comprehensive Seeder...');
 
         // 1. Clean data (Except Users)
         await pool.request().query('DELETE FROM JurnalItems; DELETE FROM Jurnal; DELETE FROM CicilanHutang; DELETE FROM HutangSupplier; DELETE FROM PembelianItems; DELETE FROM Pembelian; DELETE FROM PenjualanItems; DELETE FROM Penjualan; DELETE FROM StockMovements; DELETE FROM Barang; DELETE FROM Suppliers; DELETE FROM Customers; DELETE FROM CashFlow;');
@@ -80,7 +80,75 @@ async function seed() {
         }
         console.log('✅ 100 Electrical products created.');
 
-        // 4. Generate Sales & Jurnal
+        // 4. Generate Purchases (Pembelian)
+        for (let i = 1; i <= 20; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+            const sId = suppliers[Math.floor(Math.random() * suppliers.length)];
+            const b = barangs[Math.floor(Math.random() * barangs.length)];
+            const qty = Math.floor(Math.random() * 50) + 10;
+            const subtotal = qty * b.HargaBeli;
+            const lunas = Math.random() > 0.3;
+
+            const resP = await pool.request()
+                .input('no', sql.NVarChar, `PUR-${i.toString().padStart(5, '0')}`)
+                .input('tgl', sql.Date, date)
+                .input('sid', sql.Int, sId)
+                .input('sub', sql.Decimal(18, 2), subtotal)
+                .input('tot', sql.Decimal(18, 2), subtotal)
+                .input('bayar', sql.Decimal(18, 2), lunas ? subtotal : 0)
+                .input('met', sql.NVarChar, lunas ? 'Tunai' : 'Hutang')
+                .input('usr', sql.NVarChar, 'admin')
+                .query('INSERT INTO Pembelian (NoFaktur, Tanggal, SupplierId, Subtotal, Diskon, Total, Bayar, Kembali, Metode, UserCreated) OUTPUT INSERTED.Id VALUES (@no, @tgl, @sid, @sub, 0, @tot, @bayar, 0, @met, @usr)');
+
+            const pId = resP.recordset[0].Id;
+
+            // Items
+            await pool.request()
+                .input('pid', sql.Int, pId)
+                .input('bid', sql.Int, b.Id)
+                .input('nb', sql.NVarChar, b.Nama)
+                .input('qty', sql.Decimal(18, 2), qty)
+                .input('hb', sql.Decimal(18, 2), b.HargaBeli)
+                .input('sub', sql.Decimal(18, 2), subtotal)
+                .query('INSERT INTO PembelianItems (PembelianId, BarangId, NamaBarang, Qty, HargaBeli, Subtotal) VALUES (@pid, @bid, @nb, @qty, @hb, @sub)');
+
+            // Stock Movement
+            await pool.request()
+                .input('bid', sql.Int, b.Id)
+                .input('qty', sql.Decimal(18, 2), qty)
+                .input('ket', sql.NVarChar, `Pembelian ${pId}`)
+                .input('ref', sql.Int, pId)
+                .query('INSERT INTO StockMovements (BarangId, Tipe, Qty, Keterangan, RefId) VALUES (@bid, \'in\', @qty, @ket, @ref)');
+
+            // Hutang if not lunas
+            if (!lunas) {
+                const jatem = new Date(date);
+                jatem.setDate(jatem.getDate() + 30);
+                await pool.request()
+                    .input('pid', sql.Int, pId)
+                    .input('no', sql.NVarChar, `PUR-${i.toString().padStart(5, '0')}`)
+                    .input('sid', sql.Int, sId)
+                    .input('tgl', sql.Date, date)
+                    .input('tot', sql.Decimal(18, 2), subtotal)
+                    .input('sis', sql.Decimal(18, 2), subtotal)
+                    .input('jt', sql.Date, jatem)
+                    .query('INSERT INTO HutangSupplier (PembelianId, NoFaktur, SupplierId, TanggalFaktur, Total, Sisa, JatuhTempo) VALUES (@pid, @no, @sid, @tgl, @tot, @sis, @jt)');
+            }
+
+            // Jurnal
+            const resJ = await pool.request()
+                .input('tgl', sql.DateTime, date)
+                .input('ket', sql.NVarChar, `Pembelian ${pId}`)
+                .query('INSERT INTO Jurnal (Tanggal, Keterangan) OUTPUT INSERTED.Id VALUES (@tgl, @ket)');
+            const jId = resJ.recordset[0].Id;
+
+            await pool.request().input('jid', sql.Int, jId).input('deb', sql.Decimal(18, 2), subtotal).query('INSERT INTO JurnalItems (JurnalId, Akun, Debit, Kredit) VALUES (@jid, \'persediaan\', @deb, 0)');
+            await pool.request().input('jid', sql.Int, jId).input('kre', sql.Decimal(18, 2), subtotal).query('INSERT INTO JurnalItems (JurnalId, Akun, Debit, Kredit) VALUES (@jid, @acc, 0, @kre)', { acc: lunas ? 'kas' : 'hutang' });
+        }
+        console.log('✅ 20 Purchases with stock movements and journals created.');
+
+        // 5. Generate Sales & Jurnal
         for (let i = 1; i <= 50; i++) {
             const date = new Date();
             date.setDate(date.getDate() - Math.floor(Math.random() * 10));
@@ -110,6 +178,14 @@ async function seed() {
                 .input('sub', sql.Decimal(18, 2), total)
                 .query('INSERT INTO PenjualanItems (PenjualanId, BarangId, NamaBarang, Qty, HargaBeli, HargaJual, Diskon, Subtotal) VALUES (@sid, @bid, @nb, @qty, @hb, @hj, 0, @sub)');
 
+            // Stock Movement
+            await pool.request()
+                .input('bid', sql.Int, b.Id)
+                .input('qty', sql.Decimal(18, 2), qty)
+                .input('ket', sql.NVarChar, `Penjualan ${saleId}`)
+                .input('ref', sql.Int, saleId)
+                .query('INSERT INTO StockMovements (BarangId, Tipe, Qty, Keterangan, RefId) VALUES (@bid, \'out\', @qty, @ket, @ref)');
+
             // Jurnal Penjualan
             const resJ = await pool.request()
                 .input('tgl', sql.DateTime, date)
@@ -120,9 +196,9 @@ async function seed() {
             await pool.request().input('jid', sql.Int, jId).input('deb', sql.Decimal(18, 2), total).query('INSERT INTO JurnalItems (JurnalId, Akun, Debit, Kredit) VALUES (@jid, \'kas\', @deb, 0)');
             await pool.request().input('jid', sql.Int, jId).input('kre', sql.Decimal(18, 2), total).query('INSERT INTO JurnalItems (JurnalId, Akun, Debit, Kredit) VALUES (@jid, \'penjualan\', 0, @kre)');
         }
-        console.log('✅ 50 Sales entries with journals created.');
+        console.log('✅ 50 Sales entries with stock movements and journals created.');
 
-        // 5. Generate CashFlow
+        // 6. Generate CashFlow
         const cfCats = ['Listrik', 'Gaji', 'Sewa', 'Lainnya'];
         for (let i = 1; i <= 30; i++) {
             const date = new Date();
