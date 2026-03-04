@@ -18,7 +18,8 @@ const App = {
             barang: BarangPage,
             supplier: SupplierPage,
             customer: CustomerPage,
-            'user-mgmt': UserMgmtPage
+            'user-mgmt': UserMgmtPage,
+            settings: SettingsPage
         };
     },
 
@@ -62,7 +63,6 @@ const App = {
     showApp() {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').classList.remove('hidden');
-        document.getElementById('sidebar-toggle-mobile').style.display = 'flex';
         document.getElementById('user-avatar').textContent = Auth.currentUser?.nama?.[0]?.toUpperCase() || 'A';
         document.getElementById('user-name').textContent = Auth.currentUser?.nama || 'User';
         document.getElementById('user-role').textContent = Auth.currentUser?.role === 'admin' ? 'Administrator' : 'Kasir';
@@ -70,8 +70,11 @@ const App = {
         if (!Auth.isAdmin()) {
             const navUser = document.getElementById('nav-user-mgmt');
             if (navUser) navUser.style.display = 'none';
-            // Removed nav-db-mgmt as per instruction
         }
+
+        // Apply saved theme on login
+        const savedTheme = localStorage.getItem('nadyn_theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
 
         this.setupNavigation();
         this.navigate('dashboard');
@@ -79,36 +82,32 @@ const App = {
 
     setupNavigation() {
         document.querySelectorAll('.nav-item[data-page]').forEach(item => {
-            // Remove existing listener if any
             const newItem = item.cloneNode(true);
             item.parentNode.replaceChild(newItem, item);
             newItem.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.navigate(newItem.dataset.page);
+                // On mobile: close sidebar after click
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('mobile-active');
+                }
             });
         });
 
+        // Single unified toggle button
         const toggle = document.getElementById('sidebar-toggle');
-        const mobileToggle = document.getElementById('sidebar-toggle-mobile');
         const sidebar = document.getElementById('sidebar');
-
         if (toggle) {
             toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
+                if (window.innerWidth <= 768) {
+                    // Mobile: show/hide overlay
+                    sidebar.classList.toggle('mobile-active');
+                } else {
+                    // Desktop/Tablet: collapse/expand
+                    sidebar.classList.toggle('collapsed');
+                }
             });
         }
-        if (mobileToggle) {
-            mobileToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('mobile-active');
-            });
-        }
-
-        // Close mobile sidebar on nav click
-        document.querySelectorAll('.nav-item[data-page]').forEach(item => {
-            item.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-active');
-            });
-        });
 
         const logout = document.getElementById('logout-btn');
         if (logout) {

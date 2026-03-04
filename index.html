@@ -43,8 +43,8 @@
   </div>
 
   <!-- App Shell -->
-  <button id="sidebar-toggle-mobile" class="sidebar-toggle-mobile" title="Menu">&#9776;</button>
   <div id="app" class="app hidden">
+
     <!-- Sidebar -->
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-header">
@@ -52,7 +52,7 @@
           <span class="logo-icon-sm">⚡</span>
           <div>
             <div class="sidebar-title">TOKO NADYN</div>
-            <div class="sidebar-subtitle">POS System</div>
+            <div class="sidebar-subtitle">v1.0.0 · POS System</div>
           </div>
         </div>
         <button id="sidebar-toggle" class="sidebar-toggle" title="Toggle Sidebar">&#9776;</button>
@@ -99,6 +99,9 @@
         <a href="#" class="nav-item" data-page="user-mgmt" id="nav-user-mgmt">
           <span class="nav-icon">👤</span><span class="nav-label">User</span>
         </a>
+        <a href="#" class="nav-item" data-page="settings">
+          <span class="nav-icon">⚙️</span><span class="nav-label">Pengaturan</span>
+        </a>
 
       </nav>
 
@@ -127,6 +130,7 @@
       <div id="page-supplier" class="page"></div>
       <div id="page-customer" class="page"></div>
       <div id="page-user-mgmt" class="page"></div>
+      <div id="page-settings" class="page"></div>
 
     </main>
   </div>
@@ -165,6 +169,7 @@
   <script src="js/pages/supplier.js"></script>
   <script src="js/pages/customer.js"></script>
   <script src="js/pages/user-mgmt.js"></script>
+  <script src="js/pages/settings.js"></script>
 
   <script src="js/app.js"></script>
 </body>

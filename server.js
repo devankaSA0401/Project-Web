@@ -64,11 +64,23 @@ app.use('/api/akuntansi', akuntansiRoutes);
 async function startServer() {
     try {
         await connectDB();
-        app.listen(port, () => {
+        const server = app.listen(port, () => {
             console.log(`🚀 Toko NADYN Backend running at http://tokonadin.com`);
+        });
+
+        server.on('error', (err) => {
+            if (err.code === 'EACCES') {
+                console.error(`❌ ERROR: Port ${port} requires Administrator privileges (Run as Admin).`);
+            } else if (err.code === 'EADDRINUSE') {
+                console.error(`❌ ERROR: Port ${port} is already being used by another application (maybe IIS, Skype, or other server).`);
+            } else {
+                console.error('❌ Server Error:', err);
+            }
+            process.exit(1);
         });
     } catch (err) {
         console.error('❌ FATAL: Server failed to start!', err);
+        process.exit(1);
     }
 }
-startServer().catch(err => console.error('Unhandled Rejection at startServer:', err));
+startServer();

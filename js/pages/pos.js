@@ -287,11 +287,33 @@ const POSPage = {
     if (this.cart.length === 0) { Utils.toast('Keranjang kosong', 'warning'); return; }
     const total = this.cart.reduce((s, it) => s + (it.qty * it.hargaJual), 0);
 
+    // Track selected payment method reactively
+    let selectedMetode = 'Tunai';
+
     Modal.open('💳 Pembayaran', `
       <div style="font-size:32px;font-weight:900;margin-bottom:20px;text-align:center;color:var(--primary-light);letter-spacing:1px">${Utils.formatRupiah(total)}</div>
-      <div class="form-group"><label>Pilih Metode</label>
-        <select id="pay-metode" style="font-size:16px;padding:12px;border-width:2px"><option value="Tunai">Tunai (Cash)</option><option value="Transfer">Transfer Bank</option><option value="QRIS">QRIS / Digital Pay</option></select>
+      
+      <div class="form-group">
+        <label style="margin-bottom:10px;display:block">Pilih Metode Pembayaran</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="pay-method-grid">
+          <button type="button" class="pay-method-btn active" data-method="Tunai" style="padding:16px 8px;border-radius:12px;border:2px solid var(--primary);background:rgba(99,102,241,0.15);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--font);transition:all .2s">
+            <span style="font-size:28px">💵</span>
+            <span style="font-size:12px;font-weight:700;color:var(--primary-light)">TUNAI</span>
+            <span style="font-size:10px;color:var(--text-muted)">Cash</span>
+          </button>
+          <button type="button" class="pay-method-btn" data-method="Transfer" style="padding:16px 8px;border-radius:12px;border:2px solid var(--border);background:var(--bg-card);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--font);transition:all .2s">
+            <span style="font-size:28px">🏦</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text-primary)">TRANSFER</span>
+            <span style="font-size:10px;color:var(--text-muted)">Via Bank</span>
+          </button>
+          <button type="button" class="pay-method-btn" data-method="QRIS" style="padding:16px 8px;border-radius:12px;border:2px solid var(--border);background:var(--bg-card);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--font);transition:all .2s">
+            <span style="font-size:28px">📱</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text-primary)">QRIS</span>
+            <span style="font-size:10px;color:var(--text-muted)">GoPay/OVO/Dana</span>
+          </button>
+        </div>
       </div>
+
       <div class="form-group"><label>Uang Dibayar</label><input type="text" inputmode="numeric" class="input-number" id="pay-cash" value="${Utils.formatNum(total)}" style="font-size:28px;text-align:center;font-weight:900;padding:15px;border:2px solid var(--primary)" /></div>
       <div style="text-align:center;font-size:18px;margin:20px 0;background:rgba(16,185,129,0.1);padding:10px;border-radius:10px">Kembali: <span id="pay-change" style="font-weight:900;color:var(--success)">Rp 0</span></div>`,
       [{ label: 'Batal', cls: 'btn-outline', action: () => Modal.close() },
@@ -299,7 +321,7 @@ const POSPage = {
         label: 'Pratinjau Nota', cls: 'btn-primary btn-lg', action: async () => {
           const bayar = Utils.parseRupiah(document.getElementById('pay-cash').value) || 0;
           if (bayar < total) { Utils.toast('Uang kurang!', 'error'); return; }
-          const metode = document.getElementById('pay-metode').value;
+          const metode = selectedMetode;
 
           const payload = {
             nota: {
@@ -392,6 +414,28 @@ const POSPage = {
         }
       }]
     );
+
+    // Payment method button interactions
+    document.querySelectorAll('.pay-method-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedMetode = btn.dataset.method;
+        // Update visual state
+        document.querySelectorAll('.pay-method-btn').forEach(b => {
+          b.style.border = '2px solid var(--border)';
+          b.style.background = 'var(--bg-card)';
+          b.querySelector('span:nth-child(2)').style.color = 'var(--text-primary)';
+        });
+        btn.style.border = '2px solid var(--primary)';
+        btn.style.background = 'rgba(99,102,241,0.15)';
+        btn.querySelector('span:nth-child(2)').style.color = 'var(--primary-light)';
+
+        // For non-cash, set payment = total (assumed full)
+        if (selectedMetode !== 'Tunai') {
+          document.getElementById('pay-cash').value = Utils.formatNum(total);
+          document.getElementById('pay-change').textContent = 'Rp 0';
+        }
+      });
+    });
 
     const cashInput = document.getElementById('pay-cash');
     const changeEl = document.getElementById('pay-change');

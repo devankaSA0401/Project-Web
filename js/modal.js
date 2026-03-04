@@ -29,10 +29,8 @@ const Modal = {
     setTitle(t) { document.getElementById('modal-title').textContent = t; },
 };
 
-// Initialize modal close
+// Initialize modal close - ONLY via X button, not overlay click
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-close').addEventListener('click', () => Modal.close());
-    document.getElementById('modal-overlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('modal-overlay')) Modal.close();
-    });
+    // NOTE: Overlay click intentionally disabled to prevent accidental data loss
 });
