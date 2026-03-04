@@ -139,7 +139,7 @@ const PembelianPage = {
     const renderItems = () => {
       document.getElementById('ff-items-wrapper').innerHTML = Utils.buildTable([
         { label: 'Barang', render: r => barang.find(b => b.id === r.barangId)?.nama },
-        { label: 'Qty', key: 'qty' },
+        { label: 'Qty', render: r => Utils.formatStock(r.qty, barang.find(b => b.id === r.barangId)?.satuan) },
         { label: 'H. Beli', render: r => Utils.formatRupiah(r.hargaBeli) },
         { label: 'Subtotal', render: r => Utils.formatRupiah(r.qty * r.hargaBeli) },
         { label: 'Hapus', render: r => `<button class="btn-del-it" style="cursor:pointer;border:none;background:none">❌</button>` }

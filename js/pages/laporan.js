@@ -57,7 +57,7 @@ const LaporanPage = {
         { label: 'H. Beli', render: r => Utils.formatRupiah(r.hargaBeli) },
         { label: 'H. Jual', render: r => Utils.formatRupiah(r.hargaJual) },
         { label: 'Margin %', render: r => `<span class="badge ${r.margin >= 25 ? 'badge-success' : 'badge-warning'}">${r.margin}%</span>` },
-        { label: 'Stok', render: r => `${Utils.formatNum(r.stok)} ${r.satuan}` },
+        { label: 'Stok', render: r => Utils.formatStock(r.stok, r.satuan) },
         { label: 'Nilai Stok', render: r => Utils.formatRupiah(r.nilaiStok) },
       ], rows, 'Tidak ada barang');
     };
