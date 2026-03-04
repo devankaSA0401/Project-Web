@@ -28,7 +28,7 @@ const StokPage = {
     async showTab(tab, wrapper) {
         const barang = await DB.getAll('barang');
         if (tab === 'history') {
-            const mvs = await DB.getAll('stockMovements');
+            const mvs = await DB.getAll('stok/movements');
             wrapper.innerHTML = Utils.buildTable([
                 { label: 'Waktu', render: r => Utils.formatDateTime(r.createdAt) },
                 { label: 'Barang', render: r => barang.find(b => b.id === r.barangId)?.nama || '-' },
@@ -54,7 +54,7 @@ const StokPage = {
         Modal.open('📋 Stock Opname (Penyesuaian Fisik)', `
       <div class="form-group"><label>Pilih Barang</label><select id="so-brg">${barangList.map(b => `<option value="${b.id}">${b.nama} (Sistem: ${b.stok})</option>`).join('')}</select></div>
       <div class="form-row cols-2">
-        <div class="form-group"><label>Stok Fisik Sebenarnya</label><input type="number" id="so-fisik" value="0" /></div>
+        <div class="form-group"><label>Stok Fisik Sebenarnya</label><input type="text" inputmode="numeric" class="input-number" id="so-fisik" value="0" /></div>
         <div class="form-group"><label>Keterangan</label><input type="text" id="so-ket" value="Stock opname bulanan" /></div>
       </div>
       <div id="so-preview" style="padding:10px;background:rgba(255,255,255,0.05);border-radius:6px;margin-top:10px">
@@ -64,7 +64,7 @@ const StokPage = {
             {
                 label: '💾 Simpan Penyesuaian', cls: 'btn-violet', action: async () => {
                     const bId = parseFloat(document.getElementById('so-brg').value);
-                    const fisik = parseFloat(document.getElementById('so-fisik').value) || 0;
+                    const fisik = Utils.parseRupiah(document.getElementById('so-fisik').value) || 0;
                     const ket = document.getElementById('so-ket').value;
                     const b = barangList.find(x => x.id === bId);
                     if (!b) return;
@@ -96,7 +96,7 @@ const StokPage = {
         const diffEl = document.getElementById('so-selisih-val');
         const updateDiff = () => {
             const b = barangList.find(x => x.id === parseFloat(brgEl.value));
-            const f = parseFloat(fisikEl.value) || 0;
+            const f = Utils.parseRupiah(fisikEl.value) || 0;
             const diff = f - b.stok;
             diffEl.textContent = (diff > 0 ? '+' : '') + diff;
             diffEl.style.color = diff > 0 ? 'var(--success)' : (diff < 0 ? 'var(--danger)' : 'var(--text-muted)');

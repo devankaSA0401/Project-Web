@@ -77,6 +77,29 @@ const POSPage = {
     });
     el.querySelector('#pos-bayar-btn').addEventListener('click', () => this.showPayment());
     el.querySelector('#cart-customer-select').addEventListener('click', () => this.selectCustomer());
+
+    // Barcode scanner listener
+    let barcodeString = '';
+    let barcodeTimeout;
+    if (!this._barcodeListenerAdded) {
+      document.addEventListener('keydown', async (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; // Ignore if typing in input
+        if (e.key === 'Enter') {
+          if (barcodeString) {
+            const barang = await DB.getAll('barang');
+            const match = barang.find(b => b.kode.toLowerCase() === barcodeString.toLowerCase());
+            if (match) { this.handleProductClick(match.id); Utils.toast(`Barcode: ${match.kode} ditambahkan`, 'success'); }
+            else { Utils.toast(`Barang tidak ditemukan: ${barcodeString}`, 'error'); }
+            barcodeString = '';
+          }
+        } else if (e.key.length === 1) {
+          barcodeString += e.key;
+          clearTimeout(barcodeTimeout);
+          barcodeTimeout = setTimeout(() => barcodeString = '', 50); // Scanner enters keys very fast
+        }
+      });
+      this._barcodeListenerAdded = true;
+    }
   },
 
   async renderMainArea() {
@@ -172,11 +195,11 @@ const POSPage = {
 
   addMeterItem(b) {
     Modal.open(`📏 Input Panjang: ${b.nama}`, `
-      <div class="form-group"><label>Panjang (meter)</label><input type="number" id="pm-qty" step="0.1" value="1" autofocus style="font-size:20px;text-align:center" /></div>`,
+      <div class="form-group"><label>Panjang (meter)</label><input type="text" inputmode="numeric" class="input-number" id="pm-qty" value="1" autofocus style="font-size:20px;text-align:center" /></div>`,
       [{ label: 'Batal', cls: 'btn-outline', action: () => Modal.close() },
       {
         label: 'Tambah', cls: 'btn-primary', action: () => {
-          const qty = parseFloat(document.getElementById('pm-qty').value) || 0;
+          const qty = Utils.parseRupiah(document.getElementById('pm-qty').value) || 0;
           if (qty <= 0 || qty > b.stok) { Utils.toast('Cek stok!', 'warning'); return; }
           this.cart.push({ ...b, barangId: b.id, qty, diskon: 0 });
           Modal.close(); this.renderCart();
@@ -217,12 +240,22 @@ const POSPage = {
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="display:flex;align-items:center;gap:10px">
              <button class="btn-sm" onclick="POSPage.updateCartQty(${i}, -${it.isMeter ? 0.5 : 1})" style="padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:4px">－</button>
-             <span style="font-size:15px;font-weight:800;min-width:24px;text-align:center">${Utils.formatNum(it.qty)}</span>
+             <input type="text" class="input-number cart-qty-input" data-idx="${i}" value="${Utils.formatNum(it.qty)}" style="width:50px;text-align:center;font-size:15px;font-weight:800;padding:4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-main)" />
              <button class="btn-sm" onclick="POSPage.updateCartQty(${i}, ${it.isMeter ? 0.5 : 1})" style="padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:4px">＋</button>
           </div>
           <div style="font-weight:800;color:var(--primary-light);font-size:14px">${Utils.formatRupiah(it.hargaJual * it.qty)}</div>
         </div>
       </div>`).join('');
+
+    // Attach qty input listener
+    wrapper.querySelectorAll('.cart-qty-input').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.dataset.idx);
+        const val = Utils.parseRupiah(e.target.value);
+        if (val > 0) { this.cart[idx].qty = val; this.renderCart(); }
+        else { this.cart.splice(idx, 1); this.renderCart(); }
+      });
+    });
 
     const subtotal = this.cart.reduce((s, it) => s + (it.qty * it.hargaJual), 0);
     document.getElementById('cart-subtotal').textContent = Utils.formatRupiah(subtotal);
@@ -259,12 +292,12 @@ const POSPage = {
       <div class="form-group"><label>Pilih Metode</label>
         <select id="pay-metode" style="font-size:16px;padding:12px;border-width:2px"><option value="Tunai">Tunai (Cash)</option><option value="Transfer">Transfer Bank</option><option value="QRIS">QRIS / Digital Pay</option></select>
       </div>
-      <div class="form-group"><label>Uang Dibayar</label><input type="number" id="pay-cash" value="${total}" style="font-size:28px;text-align:center;font-weight:900;padding:15px;border:2px solid var(--primary)" /></div>
+      <div class="form-group"><label>Uang Dibayar</label><input type="text" inputmode="numeric" class="input-number" id="pay-cash" value="${Utils.formatNum(total)}" style="font-size:28px;text-align:center;font-weight:900;padding:15px;border:2px solid var(--primary)" /></div>
       <div style="text-align:center;font-size:18px;margin:20px 0;background:rgba(16,185,129,0.1);padding:10px;border-radius:10px">Kembali: <span id="pay-change" style="font-weight:900;color:var(--success)">Rp 0</span></div>`,
       [{ label: 'Batal', cls: 'btn-outline', action: () => Modal.close() },
       {
-        label: '🔥 PROSES TRANSAKSI', cls: 'btn-primary btn-lg', action: async () => {
-          const bayar = parseFloat(document.getElementById('pay-cash').value) || 0;
+        label: 'Pratinjau Nota', cls: 'btn-primary btn-lg', action: async () => {
+          const bayar = Utils.parseRupiah(document.getElementById('pay-cash').value) || 0;
           if (bayar < total) { Utils.toast('Uang kurang!', 'error'); return; }
           const metode = document.getElementById('pay-metode').value;
 
@@ -293,61 +326,69 @@ const POSPage = {
             jurnal: { keterangan: `POS: ${metode}`, items: [{ akun: 'kas', debit: total }, { akun: 'penjualan', kredit: total }] }
           };
 
-          const res = await DB.insert('penjualan', payload);
-          if (res?.success) {
-            Modal.close(); // Close payment modal
-            this.cart = []; // Clear cart
-            this.renderCart(); // Refresh UI
+          const content = `
+            <div style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#000;">
+              <div style="border-top:1px dashed #000; padding:5px 0; font-size:10px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span>No: ${payload.nota.noNota}</span>
+                  <span>${Utils.formatDate(new Date())}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span>Kasir: ${Auth.currentUser.nama || Auth.currentUser.username}</span>
+                  <span>Cust: ${this.selectedCustomer?.nama || 'Umum'}</span>
+                </div>
+              </div>
 
-            Utils.confirm('Transaksi Berhasil! Cetak Nota?', async () => {
-              const content = `
-                <div style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#000;">
-                  <div style="border-top:1px dashed #000; padding:5px 0; font-size:10px;">
+              <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:8px 0;">
+                ${payload.items.map(it => `
+                  <div style="margin-bottom:5px;">
                     <div style="display:flex; justify-content:space-between;">
-                      <span>No: ${payload.nota.noNota}</span>
-                      <span>${Utils.formatDate(new Date())}</span>
+                      <span style="flex:1;">${it.namaBarang}</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between;">
-                      <span>Kasir: ${Auth.currentUser.nama || Auth.currentUser.username}</span>
-                      <span>Cust: ${this.selectedCustomer?.nama || 'Umum'}</span>
+                    <div style="display:flex; justify-content:space-between; padding-left:10px;">
+                      <span>${Utils.formatNum(it.qty)} x ${Utils.formatNum(it.hargaJual)}</span>
+                      <span>${Utils.formatNum(it.subtotal)}</span>
                     </div>
                   </div>
+                `).join('')}
+              </div>
 
-                  <div style="border-top:1px dashed #000; border-bottom:1px dashed #000; padding:8px 0;">
-                    ${payload.items.map(it => `
-                      <div style="margin-bottom:5px;">
-                        <div style="display:flex; justify-content:space-between;">
-                          <span style="flex:1;">${it.namaBarang}</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; padding-left:10px;">
-                          <span>${Utils.formatNum(it.qty)} x ${Utils.formatNum(it.hargaJual)}</span>
-                          <span>${Utils.formatNum(it.subtotal)}</span>
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
+              <div style="margin-top:8px; font-weight:bold;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span>TOTAL</span>
+                  <span>${Utils.formatNum(total)}</span>
+                </div>
+              </div>
 
-                  <div style="margin-top:8px; font-weight:bold;">
-                    <div style="display:flex; justify-content:space-between;">
-                      <span>TOTAL</span>
-                      <span>${Utils.formatNum(total)}</span>
-                    </div>
-                  </div>
+              <div style="margin-top:5px; font-size:11px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span>BAYAR (${metode})</span>
+                  <span>${Utils.formatNum(bayar)}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span>KEMBALI</span>
+                  <span>${Utils.formatNum(bayar - total)}</span>
+                </div>
+              </div>
+            </div>`;
 
-                  <div style="margin-top:5px; font-size:11px;">
-                    <div style="display:flex; justify-content:space-between;">
-                      <span>BAYAR (${metode})</span>
-                      <span>${Utils.formatNum(bayar)}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between;">
-                      <span>KEMBALI</span>
-                      <span>${Utils.formatNum(bayar - total)}</span>
-                    </div>
-                  </div>
-                </div>`;
-              Utils.print('Nota Penjualan', content, 'receipt');
-            });
-          }
+          // Show preview before processing
+          Modal.open('📜 Preview Nota Pembelian', `<div style="max-height:450px;overflow-y:auto;background:#fff;padding:20px;border-radius:10px;box-shadow:inset 0 0 10px rgba(0,0,0,0.1)">${content}</div>`,
+            [{ label: 'Batal / Revisi', cls: 'btn-outline', action: () => Modal.close() },
+            {
+              label: '🔥 Simpan Transaksi & Cetak Nota', cls: 'btn-success btn-lg', action: async () => {
+                const res = await DB.insert('penjualan', payload);
+                if (res?.success) {
+                  Modal.close(); // Close preview modal
+                  this.cart = []; // Clear cart
+                  this.renderCart(); // Refresh UI
+                  Utils.print('Nota Penjualan', content, 'receipt');
+
+                  // Tampilkan toast bahwa transaksi selesai
+                  Utils.toast('Transaksi Berhasil Disimpan', 'success');
+                }
+              }
+            }]);
         }
       }]
     );
@@ -355,7 +396,7 @@ const POSPage = {
     const cashInput = document.getElementById('pay-cash');
     const changeEl = document.getElementById('pay-change');
     cashInput.addEventListener('input', () => {
-      const val = parseFloat(cashInput.value) || 0;
+      const val = Utils.parseRupiah(cashInput.value) || 0;
       changeEl.textContent = Utils.formatRupiah(Math.max(0, val - total));
     });
   }

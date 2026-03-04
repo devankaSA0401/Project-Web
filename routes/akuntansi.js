@@ -4,7 +4,7 @@ const sql = require('mssql');
 const { toCamel } = require('../backend_utils');
 
 // GET all journal entries
-router.get('/jurnal', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const pool = await sql.connect();
         const result = await pool.request().query(`
@@ -18,7 +18,7 @@ router.get('/jurnal', async (req, res) => {
 });
 
 // GET items for a journal entry
-router.get('/jurnal/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const pool = await sql.connect();
         const result = await pool.request()
@@ -26,6 +26,44 @@ router.get('/jurnal/:id', async (req, res) => {
             .query('SELECT * FROM JurnalItems WHERE JurnalId = @id');
         res.json(toCamel(result.recordset));
     } catch (err) { res.status(500).send(err.message); }
+});
+
+// POST to create a journal entry manually or automatically
+router.post('/', async (req, res) => {
+    const data = req.body;
+    const pool = await sql.connect();
+    const transaction = new sql.Transaction(pool);
+    try {
+        await transaction.begin();
+        const request = new sql.Request(transaction);
+
+        // 1. Insert Jurnal
+        const njur = await request
+            .input('tgl', sql.DateTime, data.tanggal || new Date())
+            .input('ket', sql.NVarChar, data.keterangan || 'Jurnal Umum')
+            .input('user', sql.NVarChar, data.user || 'admin')
+            .query('INSERT INTO Jurnal (Tanggal, Keterangan, CreatedBy) OUTPUT INSERTED.Id VALUES (@tgl, @ket, @user)');
+
+        const jId = njur.recordset[0].Id;
+
+        // 2. Insert Jurnal Items
+        if (data.items && Array.isArray(data.items)) {
+            for (const jit of data.items) {
+                await new sql.Request(transaction)
+                    .input('jid', sql.Int, jId)
+                    .input('akun', sql.NVarChar, jit.akun)
+                    .input('deb', sql.Decimal(18, 2), jit.debit || 0)
+                    .input('kre', sql.Decimal(18, 2), jit.kredit || 0)
+                    .query('INSERT INTO JurnalItems (JurnalId, Akun, Debit, Kredit) VALUES (@jid, @akun, @deb, @kre)');
+            }
+        }
+
+        await transaction.commit();
+        res.json({ success: true, id: jId });
+    } catch (err) {
+        if (transaction) await transaction.rollback();
+        res.status(500).send(err.message);
+    }
 });
 
 // GET financial highlights (dashboard data)

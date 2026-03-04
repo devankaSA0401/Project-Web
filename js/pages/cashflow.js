@@ -63,7 +63,7 @@ const CashFlowPage = {
       </div>
       <div class="form-group"><label>Keterangan *</label><input type="text" id="fc-ket" /></div>
       <div class="form-row cols-2">
-        <div class="form-group"><label>Jumlah (Rp) *</label><input type="number" id="fc-jumlah" value="0" /></div>
+        <div class="form-group"><label>Jumlah (Rp) *</label><input type="text" inputmode="numeric" class="input-number" id="fc-jumlah" value="0" /></div>
         <div class="form-group"><label>Tanggal</label><input type="date" id="fc-tgl" value="${Utils.today()}" /></div>
       </div>`,
       [{ label: 'Batal', cls: 'btn-outline', action: () => Modal.close() },
@@ -73,7 +73,7 @@ const CashFlowPage = {
             tipe: document.getElementById('fc-tipe').value,
             kategori: document.getElementById('fc-kat').value || 'Operasional',
             keterangan: document.getElementById('fc-ket').value,
-            jumlah: parseFloat(document.getElementById('fc-jumlah').value) || 0,
+            jumlah: Utils.parseRupiah(document.getElementById('fc-jumlah').value) || 0,
             tanggal: document.getElementById('fc-tgl').value
           };
           if (!data.keterangan || data.jumlah <= 0) { Utils.toast('Lengkapi data kas', 'error'); return; }

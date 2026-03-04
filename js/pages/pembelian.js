@@ -70,8 +70,8 @@ const PembelianPage = {
       <hr style="opacity:0.1;margin:15px 0" />
       <div class="form-row" style="gap:10px;align-items:flex-end">
         <div class="form-group" style="flex:2"><label>Pilih Barang</label><select id="ff-brg">${barang.map(b => `<option value="${b.id}">${b.nama} (${b.kode})</option>`).join('')}</select></div>
-        <div class="form-group" style="flex:1"><label>Qty</label><input type="number" id="ff-qty" value="1" /></div>
-        <div class="form-group" style="flex:1"><label>H. Beli Satuan (Rp)</label><input type="number" id="ff-hbeli" value="0" /></div>
+        <div class="form-group" style="flex:1"><label>Qty</label><input type="text" inputmode="numeric" class="input-number" id="ff-qty" value="1" /></div>
+        <div class="form-group" style="flex:1"><label>H. Beli Satuan (Rp)</label><input type="text" inputmode="numeric" class="input-number" id="ff-hbeli" value="0" /></div>
         <button class="btn btn-violet" id="ff-add-item" style="height:38px;padding:0 15px">Tambahkan</button>
       </div>
       <div id="ff-items-wrapper" style="margin-top:15px;max-height:200px;overflow-y:auto"></div>
@@ -158,8 +158,8 @@ const PembelianPage = {
 
     document.getElementById('ff-add-item').addEventListener('click', () => {
       const bId = parseFloat(brgEl.value);
-      const qty = parseFloat(document.getElementById('ff-qty').value) || 0;
-      const hb = parseFloat(hbeliEl.value) || 0;
+      const qty = Utils.parseRupiah(document.getElementById('ff-qty').value) || 0;
+      const hb = Utils.parseRupiah(hbeliEl.value) || 0;
       if (qty <= 0) return;
       fakturItems.push({ barangId: bId, qty, hargaBeli: hb });
       renderItems();
@@ -171,13 +171,13 @@ const PembelianPage = {
     if (!item) return;
     Modal.open('💸 Pembayaran Hutang Supplier', `
       <div class="form-group"><label>Sisa Hutang</label><div class="stat-value" style="font-size:24px;color:var(--danger)">${Utils.formatRupiah(item.sisa)}</div></div>
-      <div class="form-group"><label>Jumlah Bayar</label><input type="number" id="pay-hutang-amt" value="${item.sisa}" /></div>
+      <div class="form-group"><label>Jumlah Bayar</label><input type="text" inputmode="numeric" class="input-number" id="pay-hutang-amt" value="${Utils.formatNum(item.sisa)}" /></div>
       <div class="form-group"><label>Tanggal Bayar</label><input type="date" id="pay-hutang-tgl" value="${Utils.today()}" /></div>
       <div class="form-group"><label>Keterangan</label><input type="text" id="pay-hutang-ket" value="Cicilan faktur ${item.noFaktur}" /></div>`,
       [{ label: 'Batal', cls: 'btn-outline', action: () => Modal.close() },
       {
         label: '💾 Simpan', cls: 'btn-primary', action: async () => {
-          const amt = parseFloat(document.getElementById('pay-hutang-amt').value) || 0;
+          const amt = Utils.parseRupiah(document.getElementById('pay-hutang-amt').value) || 0;
           if (amt <= 0 || amt > item.sisa) { Utils.toast('Jumlah tidak valid', 'error'); return; }
 
           const res = await DB.insert(`hutangSupplier/${id}/cicilan`, {

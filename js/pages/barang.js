@@ -80,12 +80,12 @@ const BarangPage = {
         <div class="form-group"><label>Satuan</label><input type="text" id="fb-sat" value="${item?.satuan || 'pcs'}" /></div>
       </div>
       <div class="form-row cols-2">
-        <div class="form-group"><label>Harga Beli (Rp)</label><input type="number" id="fb-hbeli" value="${item?.hargaBeli || 0}" /></div>
-        <div class="form-group"><label>Harga Jual (Rp)</label><input type="number" id="fb-hjual" value="${item?.hargaJual || 0}" /></div>
+        <div class="form-group"><label>Harga Beli (Rp)</label><input type="text" inputmode="numeric" class="input-number" id="fb-hbeli" value="${item ? Utils.formatNum(item.hargaBeli) : 0}" /></div>
+        <div class="form-group"><label>Harga Jual (Rp)</label><input type="text" inputmode="numeric" class="input-number" id="fb-hjual" value="${item ? Utils.formatNum(item.hargaJual) : 0}" /></div>
       </div>
       <div class="form-row cols-2">
-        <div class="form-group"><label>Stok Awal</label><input type="number" id="fb-stok" value="${item?.stok || 0}" /></div>
-        <div class="form-group"><label>Stok Minim</label><input type="number" id="fb-stokmin" value="${item?.stokMin || 5}" /></div>
+        <div class="form-group"><label>Stok Awal</label><input type="text" inputmode="numeric" class="input-number" id="fb-stok" value="${item ? Utils.formatNum(item.stok) : 0}" /></div>
+        <div class="form-group"><label>Stok Minim</label><input type="text" inputmode="numeric" class="input-number" id="fb-stokmin" value="${item ? Utils.formatNum(item.stokMin) : 5}" /></div>
       </div>
       <div class="form-group"><label>Supplier</label><select id="fb-sup"><option value="">- Pilih Supplier -</option>${suppliers.map(s => `<option value="${s.id}" ${s.id === item?.supplierId ? 'selected' : ''}>${s.nama}</option>`).join('')}</select></div>
       <div class="form-group"><label style="display:flex;align-items:center;gap:10px;text-transform:none"><input type="checkbox" id="fb-meter" ${item?.isMeter ? 'checked' : ''} style="width:auto" /> Barang ini dijual per meter (kabel)</label></div>`,
@@ -97,10 +97,10 @@ const BarangPage = {
             nama: document.getElementById('fb-nama').value,
             kategori: document.getElementById('fb-kat').value,
             satuan: document.getElementById('fb-sat').value,
-            hargaBeli: parseFloat(document.getElementById('fb-hbeli').value) || 0,
-            hargaJual: parseFloat(document.getElementById('fb-hjual').value) || 0,
-            stok: parseFloat(document.getElementById('fb-stok').value) || 0,
-            stokMin: parseFloat(document.getElementById('fb-stokmin').value) || 0,
+            hargaBeli: Utils.parseRupiah(document.getElementById('fb-hbeli').value) || 0,
+            hargaJual: Utils.parseRupiah(document.getElementById('fb-hjual').value) || 0,
+            stok: Utils.parseRupiah(document.getElementById('fb-stok').value) || 0,
+            stokMin: Utils.parseRupiah(document.getElementById('fb-stokmin').value) || 0,
             supplierId: parseFloat(document.getElementById('fb-sup').value) || null,
             isMeter: document.getElementById('fb-meter').checked
           };

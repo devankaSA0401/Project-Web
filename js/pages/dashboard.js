@@ -92,8 +92,18 @@ const DashboardPage = {
   },
 
   async _getTop10() {
-    // Should be handled by a SQL query in real backend, but let's simulate for now
-    return [];
+    try {
+      const allItems = await DB.getAll('penjualan/items');
+      if (!allItems || allItems.length === 0) return [];
+      const counts = {};
+      for (const it of allItems) {
+        if (!counts[it.namaBarang]) counts[it.namaBarang] = 0;
+        counts[it.namaBarang] += parseFloat(it.qty) || 0;
+      }
+      const arr = Object.keys(counts).map(nama => ({ nama, qty: counts[nama] }));
+      arr.sort((a, b) => b.qty - a.qty);
+      return arr.slice(0, 10);
+    } catch { return []; }
   },
 
   _initCharts(labels, data, catLabels, catData) {

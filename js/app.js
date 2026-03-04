@@ -150,4 +150,15 @@ const App = {
     }
 };
 
+document.addEventListener('input', (e) => {
+    if (e.target.tagName === 'INPUT' && e.target.classList.contains('input-number')) {
+        let val = e.target.value.replace(/[^0-9]/g, '');
+        if (val) {
+            e.target.value = parseInt(val, 10).toLocaleString('id-ID');
+        } else {
+            e.target.value = '';
+        }
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => App.init());
