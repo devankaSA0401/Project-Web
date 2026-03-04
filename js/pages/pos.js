@@ -139,7 +139,7 @@ const POSPage = {
             <div class="ppc-icon" style="font-size:24px">${Utils.categoryIcon(b.kategori)}</div>
             <div class="ppc-name" style="height:32px;overflow:hidden">${b.nama}</div>
             <div class="ppc-price">${Utils.formatRupiah(b.hargaJual)}</div>
-            <div class="ppc-stock">${b.isMeter ? '📏 ' + Utils.formatNum(b.stok) + ' m' : '📦 ' + Utils.formatNum(b.stok)}</div>
+            <div class="ppc-stock">${Utils.formatStock(b.stok, b.isMeter ? 'm' : 'pcs')}</div>
           </div>
         `).join('')}
       </div>
@@ -217,7 +217,7 @@ const POSPage = {
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div style="display:flex;align-items:center;gap:10px">
              <button class="btn-sm" onclick="POSPage.updateCartQty(${i}, -${it.isMeter ? 0.5 : 1})" style="padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:4px">－</button>
-             <span style="font-size:15px;font-weight:800;min-width:24px;text-align:center">${it.qty}</span>
+             <span style="font-size:15px;font-weight:800;min-width:24px;text-align:center">${Utils.formatNum(it.qty)}</span>
              <button class="btn-sm" onclick="POSPage.updateCartQty(${i}, ${it.isMeter ? 0.5 : 1})" style="padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:4px">＋</button>
           </div>
           <div style="font-weight:800;color:var(--primary-light);font-size:14px">${Utils.formatRupiah(it.hargaJual * it.qty)}</div>

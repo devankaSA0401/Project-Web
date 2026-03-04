@@ -40,7 +40,7 @@ const StokPage = {
             wrapper.innerHTML = Utils.buildTable([
                 { label: 'Kode', key: 'kode' },
                 { label: 'Nama', render: r => `${Utils.categoryIcon(r.kategori)} ${r.nama}` },
-                { label: 'Stok Sistem', render: r => `<b>${Utils.formatNum(r.stok)} ${r.satuan}</b>` },
+                { label: 'Stok Sistem', render: r => `<b>${Utils.formatStock(r.stok, r.satuan)}</b>` },
                 { label: 'Kategori', key: 'kategori' },
                 { label: 'Status', render: r => r.stok <= r.stokMin ? '<span class="badge badge-danger">Kritis</span>' : '<span class="badge badge-success">Aman</span>' }
             ], barang, 'Data barang kosong');

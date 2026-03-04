@@ -5,9 +5,17 @@
 const Utils = {
     formatRupiah(n, prefix = 'Rp') {
         if (n === undefined || n === null || isNaN(n)) return (prefix + ' 0');
-        return prefix + ' ' + Number(n).toLocaleString('id-ID');
+        return prefix + ' ' + Math.round(Number(n)).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     },
-    formatNum(n) { return Number(n || 0).toLocaleString('id-ID'); },
+    formatNum(n) {
+        return Math.round(Number(n || 0)).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    },
+    formatStock(n, unit) {
+        const val = this.formatNum(n);
+        if (!unit) return val;
+        const u = unit.charAt(0).toUpperCase() + unit.slice(1).toLowerCase();
+        return `${val} ${u}`;
+    },
     parseRupiah(s) { return parseInt(String(s).replace(/[^0-9]/g, '')) || 0; },
 
     formatDate(d) {

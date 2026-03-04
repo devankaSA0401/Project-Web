@@ -42,7 +42,7 @@ const BarangPage = {
       { label: 'Kategori', key: 'kategori' },
       { label: 'H. Beli', render: r => Utils.formatRupiah(r.hargaBeli) },
       { label: 'H. Jual', render: r => Utils.formatRupiah(r.hargaJual) },
-      { label: 'Stok', render: r => `<span class="${r.stok <= r.stokMin ? 'stok-low' : 'stok-ok'}">${Utils.formatNum(r.stok)} ${r.satuan}</span>` },
+      { label: 'Stok', render: r => `<span class="${r.stok <= r.stokMin ? 'stok-low' : 'stok-ok'}">${Utils.formatStock(r.stok, r.satuan)}</span>` },
       { label: 'Supplier', render: r => suppliers.find(s => s.id === r.supplierId)?.nama || '-' },
       {
         label: 'Aksi', render: r => `<div class="actions">
