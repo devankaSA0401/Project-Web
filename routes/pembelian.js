@@ -23,14 +23,10 @@ router.post('/', async (req, res) => {
             .input('nota', sql.NVarChar, nota.noFaktur)
             .input('tgl', sql.Date, nota.tanggal)
             .input('supId', sql.Int, nota.supplierId)
-            .input('sub', sql.Decimal(18, 2), nota.subtotal)
-            .input('disc', sql.Decimal(18, 2), nota.diskon)
             .input('tot', sql.Decimal(18, 2), nota.total)
-            .input('bay', sql.Decimal(18, 2), nota.bayar)
-            .input('kem', sql.Decimal(18, 2), nota.kembali)
-            .input('met', sql.NVarChar, nota.metode)
-            .input('usr', sql.NVarChar, nota.userCreated)
-            .query('INSERT INTO Pembelian (NoFaktur, Tanggal, SupplierId, Subtotal, Diskon, Total, Bayar, Kembali, Metode, UserCreated) OUTPUT INSERTED.Id VALUES (@nota, @tgl, @supId, @sub, @disc, @tot, @bay, @kem, @met, @usr)');
+            .input('lun', sql.Bit, hutang && hutang.sisa > 0 ? 0 : 1)
+            .input('jatem', sql.Date, hutang && hutang.sisa > 0 ? hutang.jatuhTempo : nota.tanggal)
+            .query('INSERT INTO Pembelian (NoFaktur, Tanggal, SupplierId, Total, Lunas, JatuhTempo) OUTPUT INSERTED.Id VALUES (@nota, @tgl, @supId, @tot, @lun, @jatem)');
 
         const purchaseId = np.recordset[0].Id;
 
@@ -42,8 +38,7 @@ router.post('/', async (req, res) => {
                 .input('name', sql.NVarChar, it.namaBarang)
                 .input('qty', sql.Decimal(18, 2), it.qty)
                 .input('hb', sql.Decimal(18, 2), it.hargaBeli)
-                .input('sub', sql.Decimal(18, 2), it.subtotal)
-                .query('INSERT INTO PembelianItems (PembelianId, BarangId, NamaBarang, Qty, HargaBeli, Subtotal) VALUES (@pid, @bid, @name, @qty, @hb, @sub)');
+                .query('INSERT INTO PembelianItems (PembelianId, BarangId, NamaBarang, Qty, HargaBeli) VALUES (@pid, @bid, @name, @qty, @hb)');
 
             // 2. Insert Items & Update Stock (Moving Average HPP)
             await new sql.Request(transaction)

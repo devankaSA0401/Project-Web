@@ -137,6 +137,42 @@ async function seed() {
         }
         console.log('✅ 30 CashFlow entries created.');
 
+        // 6. Generate Pembelian & StockMovements
+        for (let i = 1; i <= 20; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+            const sId = suppliers[Math.floor(Math.random() * suppliers.length)];
+            const b = barangs[Math.floor(Math.random() * barangs.length)];
+            const qty = Math.floor(Math.random() * 50) + 10;
+            const total = qty * b.HargaBeli;
+
+            const resPur = await pool.request()
+                .input('nota', sql.NVarChar, `PO-${i.toString().padStart(5, '0')}`)
+                .input('tgl', sql.Date, date)
+                .input('sid', sql.Int, sId)
+                .input('tot', sql.Decimal(18, 2), total)
+                .query("INSERT INTO Pembelian (NoFaktur, Tanggal, SupplierId, Total, Lunas, JatuhTempo) OUTPUT INSERTED.Id VALUES (@nota, @tgl, @sid, @tot, 1, @tgl)");
+
+            const purId = resPur.recordset[0].Id;
+
+            await pool.request()
+                .input('pid', sql.Int, purId)
+                .input('bid', sql.Int, b.Id)
+                .input('nb', sql.NVarChar, b.Nama)
+                .input('qty', sql.Decimal(18, 2), qty)
+                .input('hb', sql.Decimal(18, 2), b.HargaBeli)
+                .query('INSERT INTO PembelianItems (PembelianId, BarangId, NamaBarang, Qty, HargaBeli) VALUES (@pid, @bid, @nb, @qty, @hb)');
+
+            // Adding StockMovement
+            await pool.request()
+                .input('bid', sql.Int, b.Id)
+                .input('tip', sql.NVarChar, 'in')
+                .input('qty', sql.Decimal(18, 2), qty)
+                .input('ket', sql.NVarChar, `Pembelian ${purId}`)
+                .query("INSERT INTO StockMovements (BarangId, Tipe, Qty, Keterangan) VALUES (@bid, @tip, @qty, @ket)");
+        }
+        console.log('✅ 20 Purchases & Stock Movements created.');
+
         console.log('🏁 Seeding Finished Successfully!');
         process.exit(0);
     } catch (err) {
